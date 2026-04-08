@@ -1,6 +1,6 @@
 {
   "name": "CRDM Pneumonia Surveillance site Calendar",
-  "short_name": "CRDM EpiCal",
+  "short_name": "CRDM SiteCal",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0b1220",
