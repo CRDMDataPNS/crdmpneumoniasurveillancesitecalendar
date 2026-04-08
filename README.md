@@ -1,3 +1,3 @@
-# crdmpneumoniasurveillanceepicalendar
-CRDM epi calendar
+# crdmpneumoniasurveillancesitecalendar
+CRDM site calendar
 deploy test
