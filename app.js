@@ -1,6 +1,5 @@
 // --- Date helpers ---
 const MS_DAY = 24 * 60 * 60 * 1000;
-const FRIDAY = 5; // JS: 0 Sun ... 5 Fri ... 6 Sat
 
 function startOfDay(d){
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -13,38 +12,33 @@ function addDays(d, n){
 function sameDay(a,b){
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
-function colIndexFriFirst(date){
-  return (date.getDay() - FRIDAY + 7) % 7;
+function colIndexMonFirst(date){
+  return (date.getDay() + 6) % 7;
 }
 
-// Anchor: 13–19 February 2026 is Epi Week 8
-const EPI_ANCHOR_START = new Date(2026, 1, 13); // 13 Feb 2026 (Friday)
-const EPI_ANCHOR_YEAR = 2026;
-const EPI_ANCHOR_WEEK = 8;
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((d - yearStart) / MS_DAY) + 1) / 7);
+  return { week: weekNo, year: d.getUTCFullYear() };
+}
 
 function epiInfo(date){
   const d = startOfDay(date);
+  const iso = getISOWeek(d);
 
-  const diffDays = Math.floor((d - EPI_ANCHOR_START) / MS_DAY);
-  const weekOffset = Math.floor(diffDays / 7);
-
-  let epiWeek = EPI_ANCHOR_WEEK + weekOffset;
-  let epiYear = EPI_ANCHOR_YEAR;
-
-  while (epiWeek > 53){
-    epiWeek -= 53;
-    epiYear += 1;
-  }
-
-  while (epiWeek < 1){
-    epiYear -= 1;
-    epiWeek += 53;
-  }
-
-  const weekStart = addDays(EPI_ANCHOR_START, weekOffset * 7);
+  const day = d.getDay() || 7;
+  const weekStart = addDays(d, -(day - 1));
   const weekEnd = addDays(weekStart, 6);
 
-  return { epiYear, epiWeek, weekStart, weekEnd };
+  return {
+    epiYear: iso.year,
+    epiWeek: iso.week,
+    weekStart,
+    weekEnd
+  };
 }
 
 // --- UI state ---
@@ -93,7 +87,7 @@ function render(){
   const today = startOfDay(new Date());
   const infoToday = epiInfo(today);
   subTitleEl.textContent =
-    `Today: Epi Week ${infoToday.epiWeek} (Epi Year ${infoToday.epiYear}) • Week runs ${infoToday.weekStart.toDateString()} → ${infoToday.weekEnd.toDateString()}`;
+    `Today: Site Week ${infoToday.epiWeek} (Site Year ${infoToday.epiYear}) • Week runs ${infoToday.weekStart.toDateString()} → ${infoToday.weekEnd.toDateString()}`;
 
   const y = viewDate.getFullYear();
   const m = viewDate.getMonth();
@@ -103,7 +97,7 @@ function render(){
 
   yearSelect.value = String(y);
 
-  const start = addDays(firstOfMonth, -colIndexFriFirst(firstOfMonth));
+  const start = addDays(firstOfMonth, -colIndexMonFirst(firstOfMonth));
 
   gridEl.innerHTML = "";
   for(let i=0; i<42; i++){
@@ -129,7 +123,7 @@ function render(){
     top.appendChild(dateNum);
     top.appendChild(weekBadge);
 
-    if (d.getDay() === 4){
+    if ((d.getDay() || 7) === 7){
       const endBadge = document.createElement("div");
       endBadge.className = "badge end";
       endBadge.textContent = "End";
@@ -138,7 +132,7 @@ function render(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `Epi Year ${epi.epiYear}`;
+    meta.textContent = `Site Year ${epi.epiYear}`;
 
     cell.appendChild(top);
     cell.appendChild(meta);
@@ -166,17 +160,16 @@ function showPopupIfNeeded(){
   const d = startOfDay(new Date());
   const epi = epiInfo(d);
 
-  if (d.getDay() === 5){
-    openModal(`Happy Friday!! Today is the beginning of week ${epi.epiWeek} of the year! Please check and resolve any outstanding queries.`);
-  } else if (d.getDay() === 4){
+  if ((d.getDay() || 7) === 1){
+    openModal(`Happy Monday!! Today is the beginning of week ${epi.epiWeek} of the year! Please check and resolve any outstanding queries.`);
+  } else if ((d.getDay() || 7) === 7){
     openModal(`Today is the last day of week ${epi.epiWeek}. Please make sure that all queries for the week are resolved and that all enrolled cases for the week, that are fully completed, are marked as complete. Please also make sure that all admissions and enrollments are entered on REDCap.`);
   }
 }
 
-populateYearSelect(2025, 2027);
+populateYearSelect(2023, 2027);
 setViewToMonth(viewDate.getFullYear(), viewDate.getMonth());
 showPopupIfNeeded();
-
 
 
 
