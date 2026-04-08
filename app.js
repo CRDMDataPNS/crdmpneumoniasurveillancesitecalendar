@@ -16,6 +16,12 @@ function colIndexMonFirst(date){
   return (date.getDay() + 6) % 7;
 }
 
+function getStartOfISOWeek(date){
+  const d = startOfDay(date);
+  const day = d.getDay() || 7;
+  return addDays(d, -(day - 1));
+}
+
 function getISOWeek(date){
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
@@ -29,8 +35,7 @@ function epiInfo(date){
   const d = startOfDay(date);
   const iso = getISOWeek(d);
 
-  const day = d.getDay() || 7;
-  const weekStart = addDays(d, -(day - 1));
+  const weekStart = getStartOfISOWeek(d);
   const weekEnd = addDays(weekStart, 6);
 
   return {
@@ -68,7 +73,7 @@ function closeModal(){
 modalCloseBtn.addEventListener("click", closeModal);
 backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
 
-function populateYearSelect(startYear=2025, endYear=2027){
+function populateYearSelect(startYear=2023, endYear=2027){
   yearSelect.innerHTML = "";
   for(let y = startYear; y <= endYear; y++){
     const opt = document.createElement("option");
@@ -97,7 +102,7 @@ function render(){
 
   yearSelect.value = String(y);
 
-  const start = addDays(firstOfMonth, -colIndexMonFirst(firstOfMonth));
+  const start = getStartOfISOWeek(firstOfMonth);
 
   gridEl.innerHTML = "";
   for(let i=0; i<42; i++){
@@ -163,14 +168,13 @@ function showPopupIfNeeded(){
   if ((d.getDay() || 7) === 1){
     openModal(`Happy Monday!! Today is the beginning of week ${epi.epiWeek} of the year! Please check and resolve any outstanding queries.`);
   } else if ((d.getDay() || 7) === 7){
-    openModal(`Today is the last day of week ${epi.epiWeek}. Please make sure that all queries for the week are resolved and that all enrolled cases for the week, that are fully completed, are marked as complete. Please also make sure that all admissions and enrollments are entered correctly on REDCap.`);
+    openModal(`Today is the last day of week ${epi.epiWeek}. Please make sure that all queries for the week are resolved and that all enrolled cases for the week, that are fully completed, are marked as complete. Please also make sure that all admissions and enrollments are entered on REDCap.`);
   }
 }
 
 populateYearSelect(2023, 2027);
 setViewToMonth(viewDate.getFullYear(), viewDate.getMonth());
 showPopupIfNeeded();
-
 
 
 
